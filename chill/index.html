@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>90-Day Lock-In Operating System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        :root {
+            --bg-main: #fcfcf9;
+            --accent-primary: #4f46e5;
+            --accent-secondary: #10b981;
+            --text-dark: #1a1a1a;
+            --card-border: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            scroll-behavior: smooth;
+        }
+
+        .mono { font-family: 'JetBrains+Mono', monospace; }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        .nav-link.active {
+            color: var(--accent-primary);
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .protocol-card {
+            transition: all 0.3s ease;
+        }
+
+        .protocol-card:hover {
+            border-color: var(--accent-primary);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.05);
+        }
+
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+    </style>
+</head>
+<body class="antialiased">
+
+<!-- Chosen Palette: Calm Harmony (Slate, Cream, Indigo) -->
+<!-- Application Structure Plan: 
+     The SPA is organized into four functional pillars:
+     1. Command Dashboard: Real-time status, "Mode" toggle (Default vs. Video Editing), and the current day's focus. 
+     2. Synchronization Arc: A thematic breakdown of how the 180-day FSD roadmap is compressed to fit the 90-day GATE timeline.
+     3. The Execution System: The rigid rulebook, behavior protocols, and the adaptive schedule.
+     4. Audit Terminal: The data-entry and tracking component for daily accountability.
+     This structure was chosen to minimize decision fatigue; the user opens the app and immediately sees 'what to do now' while maintaining visibility of the long-term progress.
+-->
+<!-- Visualization & Content Choices: 
+     - Summary Stats -> Goal: Status awareness -> KPI cards -> Interaction: None -> Clean visual feedback.
+     - Progress Doughnut -> Goal: Temporal orientation -> Chart.js Doughnut -> Visualizes 90-day countdown.
+     - Synchronized Timeline -> Goal: Mapping dependencies -> HTML/CSS Grid -> Shows how GATE topics pair with FSD phases.
+     - Adaptive Schedule -> Goal: Task execution -> Dynamic Table -> JS-controlled logic based on 'Edit Mode' toggle.
+     - Performance Chart -> Goal: Analysis -> Chart.js Bar Chart -> Visualizes hours allocated per goal.
+     - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. All icons are Unicode.
+-->
+
+<div class="min-h-screen flex flex-col md:flex-row">
+    <!-- Sidebar Navigation -->
+    <nav class="w-full md:w-64 bg-white border-r border-gray-200 p-6 flex flex-col gap-8 sticky top-0 h-auto md:h-screen">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold">L-90</div>
+            <h1 class="text-lg font-bold tracking-tight">OS v1.0</h1>
+        </div>
+
+        <ul class="flex flex-col gap-4 font-medium text-gray-500">
+            <li><button onclick="nav('dashboard')" id="nav-dashboard" class="nav-link active flex items-center gap-3 w-full text-left"><span>⌂</span> Dashboard</button></li>
+            <li><button onclick="nav('arc')" id="nav-arc" class="nav-link flex items-center gap-3 w-full text-left"><span>◷</span> Synchronization Arc</button></li>
+            <li><button onclick="nav('system')" id="nav-system" class="nav-link flex items-center gap-3 w-full text-left"><span>⚙</span> The System</button></li>
+            <li><button onclick="nav('audit')" id="nav-audit" class="nav-link flex items-center gap-3 w-full text-left"><span>📝</span> Audit Terminal</button></li>
+        </ul>
+
+        <div class="mt-auto pt-6 border-t border-gray-100">
+            <div class="text-xs text-gray-400 uppercase tracking-widest mb-3">System Mode</div>
+            <button id="mode-toggle" onclick="toggleMode()" class="w-full py-2 px-4 rounded-full border-2 border-indigo-600 text-indigo-600 font-bold text-sm transition-all hover:bg-indigo-50">
+                DEFAULT MODE
+            </button>
+            <p class="text-[10px] text-gray-400 mt-2 text-center">Toggle when video work appears</p>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-4 md:p-10 overflow-y-auto">
+        
+        <!-- Section: Dashboard -->
+        <section id="sec-dashboard" class="fade-in">
+            <header class="mb-8">
+                <h2 class="text-3xl font-bold mb-2">Command Dashboard</h2>
+                <p class="text-gray-500">Welcome to the 90-day execution window. Prioritizing GATE CSE above all.</p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Status Card -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <h3 class="text-sm font-semibold text-gray-400 uppercase mb-4">Time Horizon</h3>
+                    <div class="chart-container" style="height: 200px;">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                    <div class="text-center mt-4">
+                        <span class="text-4xl font-bold" id="days-remaining">90</span>
+                        <span class="text-gray-400">Days Left</span>
+                    </div>
+                </div>
+
+                <!-- Active Focus -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <h3 class="text-sm font-semibold text-gray-400 uppercase mb-4">Current Synchronization Phase</h3>
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="flex-1 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                            <span class="text-xs font-bold text-indigo-600 uppercase">Primary: GATE</span>
+                            <h4 class="text-xl font-bold mt-1" id="gate-current">Phase 1: OS & Networks</h4>
+                            <p class="text-sm text-indigo-700 mt-2">Targeting High-ROI subjects to build early marks cushion.</p>
+                        </div>
+                        <div class="flex-1 bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                            <span class="text-xs font-bold text-emerald-600 uppercase">Secondary: FSD</span>
+                            <h4 class="text-xl font-bold mt-1" id="fsd-current">Core Fundamentals</h4>
+                            <p class="text-sm text-emerald-700 mt-2">Mastering the Internet, HTML, and CSS layouts (Tailwind focus).</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <span class="text-xs font-bold text-gray-500 uppercase">Next Major Milestone</span>
+                        <p class="text-sm font-medium mt-1">First GATE Subject-Wise Mock: June 15th</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule View -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold">Today's Adaptive Schedule</h3>
+                    <span id="active-mode-badge" class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">DEFAULT RUNTIME</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-gray-400 text-xs uppercase tracking-widest border-b border-gray-100">
+                                <th class="pb-3 font-medium">Time Block</th>
+                                <th class="pb-3 font-medium">Objective</th>
+                                <th class="pb-3 font-medium">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-body" class="text-sm font-medium">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: synchronization Arc -->
+        <section id="sec-arc" class="hidden fade-in">
+            <header class="mb-8">
+                <h2 class="text-3xl font-bold mb-2">90-Day Synchronization Arc</h2>
+                <p class="text-gray-500">How the GATE CSE roadmap and Full Stack AI roadmap interlock over 3 months.</p>
+            </header>
+
+            <div class="space-y-8">
+                <!-- Month 1 -->
+                <div class="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="h-10 w-10 bg-indigo-600 text-white flex items-center justify-center rounded-full font-bold">M1</div>
+                        <div>
+                            <h3 class="text-xl font-bold">Month 1: The Foundation Window</h3>
+                            <p class="text-sm text-gray-400">June 1 - June 30</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-sm font-bold text-indigo-600 uppercase mb-4">GATE Focus (High ROI)</h4>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-center gap-2"><span>✔</span> Operating Systems (9 Days)</li>
+                                <li class="flex items-center gap-2"><span>✔</span> Computer Networks (8 Days)</li>
+                                <li class="flex items-center gap-2"><span>✔</span> DBMS (8 Days)</li>
+                                <li class="flex items-center gap-2"><span>✔</span> TOC basics (6 Days)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-emerald-600 uppercase mb-4">FSD Focus (Phases 1-2)</h4>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-center gap-2"><span>✔</span> Internet & Terminal Fundamentals</li>
+                                <li class="flex items-center gap-2"><span>✔</span> HTML5 Semantics & Accessibility</li>
+                                <li class="flex items-center gap-2"><span>✔</span> CSS Mastery (Flex, Grid, Animations)</li>
+                                <li class="flex items-center gap-2"><span>✔</span> Tailwind CSS Integration</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 2 -->
+                <div class="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm opacity-75">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="h-10 w-10 bg-gray-200 text-gray-600 flex items-center justify-center rounded-full font-bold">M2</div>
+                        <div>
+                            <h3 class="text-xl font-bold">Month 2: The Logic Engine</h3>
+                            <p class="text-sm text-gray-400">July 1 - July 31</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-sm font-bold text-indigo-600 uppercase mb-4">GATE Focus (The Grinders)</h4>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-center gap-2 text-red-500 font-bold"><span>⚠</span> DSA + Algorithms (10 Days)</li>
+                                <li class="flex items-center gap-2"><span>✔</span> Computer Organisation (8 Days)</li>
+                                <li class="flex items-center gap-2"><span>✔</span> Compiler Design (7 Days)</li>
+                                <li class="flex items-center gap-2"><span>✔</span> Engineering Maths Rebuild (6 Days)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-emerald-600 uppercase mb-4">FSD Focus (Phases 3-4)</h4>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-center gap-2"><span>✔</span> Advanced JavaScript (Async, ES6+)</li>
+                                <li class="flex items-center gap-2"><span>✔</span> React.js Core & Hooks</li>
+                                <li class="flex items-center gap-2"><span>✔</span> Next.js App Router Integration</li>
+                                <li class="flex items-center gap-2"><span>✔</span> State Management (Zustand/Query)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 3 -->
+                <div class="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm opacity-50">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="h-10 w-10 bg-gray-200 text-gray-600 flex items-center justify-center rounded-full font-bold">M3</div>
+                        <div>
+                            <h3 class="text-xl font-bold">Month 3: Consolidation & Shipping</h3>
+                            <p class="text-sm text-gray-400">August 1 - August 30</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-sm font-bold text-indigo-600 uppercase mb-4">GATE Focus (Mock Peak)</h4>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-center gap-2"><span>✔</span> C Programming & Discrete Maths</li>
+                                <li class="flex items-center gap-2"><span>✔</span> Error Log Intensive Revisit</li>
+                                <li class="flex items-center gap-2 font-bold"><span>★</span> Full Length Mocks (2/Week)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-emerald-600 uppercase mb-4">FSD Focus (Phases 5-6)</h4>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-center gap-2"><span>✔</span> Node.js & Backend (Postgres/Prisma)</li>
+                                <li class="flex items-center gap-2"><span>✔</span> AI Integration (OpenAI/Claude API)</li>
+                                <li class="flex items-center gap-2 font-bold"><span>★</span> Full Capstone SaaS Project</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: The System -->
+        <section id="sec-system" class="hidden fade-in">
+            <header class="mb-8">
+                <h2 class="text-3xl font-bold mb-2">The Execution System</h2>
+                <p class="text-gray-500">Hard rules and recovery protocols to prevent day collapse.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Behavioral Rules -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold mb-4">Behavioral Protocol</h3>
+                    <ul class="space-y-4 text-sm">
+                        <li class="flex gap-3">
+                            <span class="text-indigo-600 font-bold">R1.</span>
+                            <span><strong>No Plan Rewrites:</strong> This system is final. No new "YouTube strategies" or roadmap changes for 90 days.</span>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="text-indigo-600 font-bold">R2.</span>
+                            <span><strong>Paper-First PYQs:</strong> GATE PYQs must be solved on paper, timed, without looking at solutions until the set is done.</span>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="text-indigo-600 font-bold">R3.</span>
+                            <span><strong>Context Lock:</strong> One GATE subject per day. Do not switch between subjects; it kills deep work retention.</span>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="text-indigo-600 font-bold">R4.</span>
+                            <span><strong>Audit Gate:</strong> If the daily record isn't filled by 11:00 PM, the day is marked as a "Fail" regardless of work done.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Chaos Protocols -->
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold mb-4">Crisis Management</h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl">
+                            <h4 class="text-sm font-bold text-amber-800">Video Editing Emergency</h4>
+                            <p class="text-xs text-amber-700 mt-1">Activate "Video Work" mode. Compress FSD time to zero. Reallocate 14:00 - 18:00 to editing. GATE blocks remain untouchable.</p>
+                        </div>
+                        <div class="p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                            <h4 class="text-sm font-bold text-blue-800">Low Energy Day</h4>
+                            <p class="text-xs text-blue-700 mt-1">Switch from "Deep Dive" to "Review Mode". Re-read your own notes and revisit the error log. Do not attempt new hard concepts.</p>
+                        </div>
+                        <div class="p-4 bg-rose-50 border border-rose-100 rounded-xl">
+                            <h4 class="text-sm font-bold text-rose-800">Missed Day Recovery</h4>
+                            <p class="text-xs text-rose-700 mt-1">Do not double up tomorrow. Stay on schedule. Reclaim the missed topic during the Sunday buffer revision window.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Audit Terminal -->
+        <section id="sec-audit" class="hidden fade-in">
+            <header class="mb-8">
+                <h2 class="text-3xl font-bold mb-2">Audit Terminal</h2>
+                <p class="text-gray-500">Mandatory logging for every hour spent in the lock-in window.</p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Log Entry -->
+                <div class="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold mb-6">Daily Record Entry</h3>
+                    <form class="space-y-4" onsubmit="return false;">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">GATE Topic Covered</label>
+                            <input type="text" placeholder="e.g., OS - Paging Algorithms" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">PYQs Attempted</label>
+                                <input type="number" placeholder="0" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">PYQs Correct</label>
+                                <input type="number" placeholder="0" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">FSD Build Task</label>
+                            <input type="text" placeholder="e.g., Build Portfolio Section" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                        </div>
+                        <div class="pt-4">
+                            <button class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">SUBMIT RECORD</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Weekly Insights -->
+                <div class="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold mb-6">Performance Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="weeklyDistChart"></canvas>
+                    </div>
+                    <div class="mt-8 space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">GATE Hours logged</span>
+                            <span class="font-bold">42h / 45h</span>
+                        </div>
+                        <div class="w-full bg-gray-100 h-2 rounded-full">
+                            <div class="bg-indigo-600 h-2 rounded-full" style="width: 93%"></div>
+                        </div>
+                        <div class="flex justify-between text-sm pt-2">
+                            <span class="text-gray-500">FSD Build items</span>
+                            <span class="font-bold">8 / 10</span>
+                        </div>
+                        <div class="w-full bg-gray-100 h-2 rounded-full">
+                            <div class="bg-emerald-500 h-2 rounded-full" style="width: 80%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script>
+    // State Management
+    let currentMode = 'DEFAULT'; // 'DEFAULT' or 'EDIT'
+    let charts = {};
+
+    // Schedule Data
+    const defaultSchedule = [
+        { time: "06:30 - 08:30", task: "GATE: Concept Deep Dive", type: "GATE" },
+        { time: "09:30 - 11:30", task: "GATE: PYQs & Application", type: "GATE" },
+        { time: "11:30 - 12:30", task: "GATE: Error Logging", type: "GATE" },
+        { time: "14:00 - 15:30", task: "FSD: Concept Theory", type: "FSD" },
+        { time: "15:30 - 18:00", task: "FSD: Build & Implementation", type: "FSD" },
+        { time: "19:30 - 21:30", task: "GATE: Spaced Revision (Day-7)", type: "GATE" },
+        { time: "21:30 - 22:00", task: "Accountability Audit", type: "SYS" }
+    ];
+
+    const editSchedule = [
+        { time: "06:30 - 08:30", task: "GATE: Concept Deep Dive", type: "GATE" },
+        { time: "09:30 - 11:30", task: "GATE: PYQs & Application", type: "GATE" },
+        { time: "11:30 - 12:30", task: "GATE: Error Logging", type: "GATE" },
+        { time: "14:00 - 18:00", task: "VIDEO EDITING WORK", type: "EDIT" },
+        { time: "19:30 - 20:30", task: "FSD: Maintenance (Review Only)", type: "FSD" },
+        { time: "20:30 - 21:30", task: "GATE: Spaced Revision", type: "GATE" },
+        { time: "21:30 - 22:00", task: "Accountability Audit", type: "SYS" }
+    ];
+
+    // Initialize UI
+    window.onload = function() {
+        renderSchedule();
+        initCharts();
+    };
+
+    function nav(section) {
+        document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+        document.getElementById('sec-' + section).classList.remove('hidden');
+        
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        document.getElementById('nav-' + section).classList.add('active');
+    }
+
+    function toggleMode() {
+        const btn = document.getElementById('mode-toggle');
+        const badge = document.getElementById('active-mode-badge');
+        
+        if (currentMode === 'DEFAULT') {
+            currentMode = 'EDIT';
+            btn.innerText = 'VIDEO EDIT MODE';
+            btn.classList.add('bg-amber-500', 'text-white', 'border-amber-500');
+            badge.innerText = 'EDITING COMPRESSION ON';
+            badge.classList.replace('bg-indigo-100', 'bg-amber-100');
+            badge.classList.replace('text-indigo-700', 'text-amber-700');
+        } else {
+            currentMode = 'DEFAULT';
+            btn.innerText = 'DEFAULT MODE';
+            btn.classList.remove('bg-amber-500', 'text-white', 'border-amber-500');
+            badge.innerText = 'DEFAULT RUNTIME';
+            badge.classList.replace('bg-amber-100', 'bg-indigo-100');
+            badge.classList.replace('text-amber-700', 'text-indigo-700');
+        }
+        renderSchedule();
+    }
+
+    function renderSchedule() {
+        const list = currentMode === 'DEFAULT' ? defaultSchedule : editSchedule;
+        const container = document.getElementById('schedule-body');
+        container.innerHTML = '';
+
+        list.forEach(item => {
+            let colorClass = "text-gray-400";
+            if(item.type === "GATE") colorClass = "text-indigo-600";
+            if(item.type === "FSD") colorClass = "text-emerald-600";
+            if(item.type === "EDIT") colorClass = "text-amber-600 font-bold";
+
+            const row = `
+                <tr class="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                    <td class="py-4 mono text-xs">${item.time}</td>
+                    <td class="py-4">
+                        <span class="${colorClass}">${item.task}</span>
+                    </td>
+                    <td class="py-4">
+                        <div class="h-2 w-2 rounded-full bg-gray-200"></div>
+                    </td>
+                </tr>
+            `;
+            container.innerHTML += row;
+        });
+    }
+
+    function initCharts() {
+        // Progress Doughnut
+        const ctxProgress = document.getElementById('progressChart').getContext('2d');
+        charts.progress = new Chart(ctxProgress, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Remaining'],
+                datasets: [{
+                    data: [1, 89],
+                    backgroundColor: ['#4f46e5', '#f3f4f6'],
+                    borderWidth: 0,
+                    cutout: '85%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Weekly Distribution Bar
+        const ctxDist = document.getElementById('weeklyDistChart').getContext('2d');
+        charts.dist = new Chart(ctxDist, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [
+                    {
+                        label: 'GATE',
+                        data: [6, 7, 6, 6, 8, 5, 4],
+                        backgroundColor: '#4f46e5',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'FSD',
+                        data: [3, 2, 4, 3, 0, 4, 2],
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { color: '#f3f4f6' }, ticks: { stepSize: 2 } }
+                },
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>

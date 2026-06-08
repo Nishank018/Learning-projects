@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>90-Day Lock-In OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: { 850: '#1f1f22', 900: '#18181b', 950: '#09090b' },
+                        gate: '#818cf8', // Indigo
+                        fsd: '#34d399',  // Emerald
+                        edit: '#fbbf24', // Amber
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+        
+        body { background-color: #09090b; color: #f4f4f5; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+        /* Hide sections initially except active */
+        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
+        .view-section.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-btn.active { background-color: #27272a; color: #ffffff; border-right: 3px solid #818cf8; }
+        
+        .input-field {
+            width: 100%; background: #18181b; border: 1px solid #3f3f46; color: #f4f4f5; 
+            padding: 0.75rem; border-radius: 0.5rem; transition: border-color 0.2s; font-size: 0.875rem;
+        }
+        .input-field:focus { outline: none; border-color: #818cf8; }
+        
+        /* Toast Notification */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 50; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 12px 20px; border-radius: 8px; font-weight: 500; font-size: 14px; color: white; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); animation: slideIn 0.3s ease-out forwards; }
+        .toast.error { background-color: #ef4444; border: 1px solid #7f1d1d; }
+        .toast.success { background-color: #10b981; border: 1px solid #064e3b; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    </style>
+</head>
+<body class="antialiased h-screen flex flex-col md:flex-row overflow-hidden">
+
+<nav class="w-full md:w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col h-auto md:h-screen shrink-0 z-20">
+    <div class="p-6 flex items-center gap-3 border-b border-zinc-800">
+        <div class="bg-indigo-600 text-white p-1.5 rounded-md font-mono font-bold text-sm leading-none">L-90</div>
+        <h1 class="text-lg font-bold tracking-tight text-zinc-100">System OS</h1>
+    </div>
+
+    <div class="flex-1 overflow-y-auto py-4">
+        <ul class="flex flex-col gap-1 px-3">
+            <li><button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-btn active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors text-left"><span class="text-lg">⌂</span> Command Dashboard</button></li>
+            <li><button onclick="switchView('terminal')" id="nav-terminal" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors text-left"><span class="text-lg">⚡</span> Audit Terminal</button></li>
+            <li><button onclick="switchView('arc')" id="nav-arc" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors text-left"><span class="text-lg">◷</span> Execution Arc</button></li>
+            <li><button onclick="switchView('protocols')" id="nav-protocols" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors text-left"><span class="text-lg">⚙</span> Hard Protocols</button></li>
+        </ul>
+    </div>
+
+    <div class="p-6 border-t border-zinc-800 bg-zinc-900/50">
+        <div class="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-3">System Mode</div>
+        <button id="mode-toggle" onclick="toggleMode()" class="w-full py-2.5 px-4 rounded-lg border-2 border-indigo-500/30 text-indigo-400 font-bold text-xs transition-all hover:bg-indigo-500/10 flex items-center justify-center gap-2">
+            <span id="mode-icon">●</span> <span id="mode-text">DEFAULT RUNTIME</span>
+        </button>
+        <p class="text-[10px] text-zinc-500 mt-2 text-center leading-tight">Activate when video editing work interrupts schedule.</p>
+    </div>
+</nav>
+
+<main class="flex-1 h-screen overflow-y-auto bg-zinc-950 relative">
+    <div class="p-4 md:p-8 max-w-6xl mx-auto pb-24">
+
+        <!-- ==================== DASHBOARD VIEW ==================== -->
+        <section id="view-dashboard" class="view-section active">
+            <header class="mb-8">
+                <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">Command Dashboard</h2>
+                <p class="text-zinc-400 text-sm mt-1">Real-time telemetry for the 90-day lock-in.</p>
+            </header>
+
+            <!-- Real-time KPIs (Updated via JS) -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                    <div class="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-1">Days Logged</div>
+                    <div class="text-2xl font-bold text-zinc-100" id="dash-days">0 / 90</div>
+                </div>
+                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                    <div class="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-1">GATE PYQ Acc.</div>
+                    <div class="text-2xl font-bold text-indigo-400" id="dash-acc">0%</div>
+                </div>
+                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                    <div class="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-1">FSD Build Hours</div>
+                    <div class="text-2xl font-bold text-emerald-400" id="dash-fsd">0.0</div>
+                </div>
+                <div class="bg-zinc-900 border border-amber-900/30 p-4 rounded-xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-amber-500/5 rounded-bl-full"></div>
+                    <div class="text-[10px] font-mono text-amber-500/70 uppercase tracking-widest mb-1">Edit Protocols</div>
+                    <div class="text-2xl font-bold text-amber-400" id="dash-edit">0</div>
+                </div>
+            </div>
+
+            <!-- Main Split: Schedule & Chart -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Today's Schedule -->
+                <div class="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl">
+                    <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
+                        <h3 class="text-lg font-bold text-zinc-100">Adaptive Daily Schedule</h3>
+                        <span id="dash-mode-badge" class="px-2.5 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-mono font-bold rounded">DEFAULT</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-zinc-500 text-[10px] font-mono uppercase tracking-widest">
+                                    <th class="pb-3 w-32">Time Block</th>
+                                    <th class="pb-3">Objective</th>
+                                    <th class="pb-3 text-right">Target</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-body" class="text-sm">
+                                <!-- Populated by JS based on Mode -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Progress Chart -->
+                <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl flex flex-col items-center justify-center">
+                    <h3 class="text-sm font-bold text-zinc-400 mb-6 self-start w-full border-b border-zinc-800 pb-4">Timeline Completion</h3>
+                    <div class="relative w-full aspect-square max-w-[200px]">
+                        <canvas id="progressChart"></canvas>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span class="text-3xl font-bold text-zinc-100" id="chart-days-left">90</span>
+                            <span class="text-[10px] font-mono text-zinc-500 uppercase">Days Left</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== AUDIT TERMINAL VIEW ==================== -->
+        <section id="view-terminal" class="view-section">
+            <header class="mb-8 flex justify-between items-end">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-bold text-zinc-100 flex items-center gap-3">
+                        Audit Terminal <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    </h2>
+                    <p class="text-zinc-400 text-sm mt-1">Execute the day. Log the data. Erase the debt.</p>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                <!-- Input Form -->
+                <div class="xl:col-span-4 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl overflow-hidden flex flex-col h-fit">
+                    <div class="bg-zinc-800/50 px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+                        <span class="text-xs font-mono font-bold text-zinc-300">NEW_ENTRY.log</span>
+                        <span id="current-date-display" class="text-[10px] font-mono text-zinc-500"></span>
+                    </div>
+                    
+                    <div class="p-5 space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-mono text-zinc-500 uppercase mb-1">Day No. (1-90)</label>
+                                <input type="number" id="input-day" min="1" max="90" class="input-field" placeholder="1">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-mono text-zinc-500 uppercase mb-1">Date</label>
+                                <input type="date" id="input-date" class="input-field">
+                            </div>
+                        </div>
+
+                        <label class="flex items-start gap-3 p-3 rounded-lg border border-amber-900/30 bg-amber-900/10 cursor-pointer hover:bg-amber-900/20 transition-colors">
+                            <input type="checkbox" id="input-video" class="mt-1 w-4 h-4 rounded border-zinc-700 text-amber-500 bg-zinc-900 focus:ring-amber-500 focus:ring-offset-zinc-900">
+                            <div>
+                                <span class="block text-sm font-bold text-amber-500">Video Protocol Active Today</span>
+                                <span class="block text-[10px] text-zinc-400 mt-0.5 leading-tight">Excuses FSD blocks. Preserves GATE deep work.</span>
+                            </div>
+                        </label>
+
+                        <div class="space-y-4 pt-4 border-t border-zinc-800">
+                            <h4 class="text-xs font-mono font-bold text-indigo-400 flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> PRIMARY: GATE CSE
+                            </h4>
+                            <div>
+                                <label class="block text-[10px] text-zinc-500 uppercase mb-1">Topic Covered</label>
+                                <input type="text" id="input-gate-topic" class="input-field" placeholder="e.g., OS: Memory Management">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] text-zinc-500 uppercase mb-1">PYQs Attempted</label>
+                                    <input type="number" id="input-pyq-att" min="0" class="input-field" placeholder="0">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-zinc-500 uppercase mb-1">PYQs Correct</label>
+                                    <input type="number" id="input-pyq-cor" min="0" class="input-field" placeholder="0">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-zinc-500 uppercase mb-1">Error Log Insights (Req. if < 75%)</label>
+                                <input type="text" id="input-error-log" class="input-field" placeholder="Identified concept gap in LRU...">
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 pt-4 border-t border-zinc-800">
+                            <h4 class="text-xs font-mono font-bold text-emerald-400 flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> SECONDARY: FULL STACK
+                            </h4>
+                            <div>
+                                <label class="block text-[10px] text-zinc-500 uppercase mb-1">Build / Learn Topic</label>
+                                <input type="text" id="input-fsd-topic" class="input-field" placeholder="e.g., Express REST API Setup">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] text-zinc-500 uppercase mb-1">Hours Logged</label>
+                                    <input type="number" step="0.5" id="input-fsd-hrs" min="0" class="input-field" placeholder="0">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-zinc-500 uppercase mb-1">Git Commit?</label>
+                                    <select id="input-git" class="input-field text-sm">
+                                        <option value="No">No</option>
+                                        <option value="Yes">Yes</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="submitAudit()" class="w-full py-3 bg-zinc-100 text-zinc-950 font-bold rounded-lg hover:bg-white transition-colors mt-2">
+                            COMMIT AUDIT RECORD
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Database / History -->
+                <div class="xl:col-span-8 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl flex flex-col h-[600px] xl:h-auto">
+                    <div class="bg-zinc-800/50 px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+                        <span class="text-xs font-mono font-bold text-zinc-300">sys.database_view</span>
+                        <button onclick="wipeDatabase()" class="text-[10px] font-mono text-red-400 hover:text-red-300 transition-colors border border-red-900/50 bg-red-900/10 px-2 py-1 rounded">WIPE_DB</button>
+                    </div>
+                    <div class="flex-1 overflow-auto p-0">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="sticky top-0 bg-zinc-900 shadow-sm z-10">
+                                <tr class="text-zinc-500 text-[10px] font-mono uppercase tracking-widest">
+                                    <th class="p-4 border-b border-zinc-800 font-medium">Day</th>
+                                    <th class="p-4 border-b border-zinc-800 font-medium">GATE Execution</th>
+                                    <th class="p-4 border-b border-zinc-800 font-medium text-center">Acc.</th>
+                                    <th class="p-4 border-b border-zinc-800 font-medium">FSD Execution</th>
+                                    <th class="p-4 border-b border-zinc-800 font-medium"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="db-body" class="divide-y divide-zinc-800/50">
+                                <!-- History Rows -->
+                            </tbody>
+                        </table>
+                        <div id="db-empty" class="hidden flex-col items-center justify-center h-48 text-zinc-600">
+                            <span class="text-2xl mb-2">🗄️</span>
+                            <span class="text-xs font-mono">DATABASE EMPTY</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ARC VIEW ==================== -->
+        <section id="view-arc" class="view-section">
+            <header class="mb-8">
+                <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">Execution Arc</h2>
+                <p class="text-zinc-400 text-sm mt-1">The 180-day FSD roadmap synchronized into the 90-day GATE timeline.</p>
+            </header>
+
+            <div class="space-y-6">
+                <!-- Month 1 -->
+                <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="text-3xl font-bold text-zinc-700">M1</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-zinc-100">The Foundation Window</h3>
+                            <p class="text-[10px] font-mono text-zinc-500">DAYS 1-30</p>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-6 pl-12">
+                        <div>
+                            <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">GATE (High ROI)</h4>
+                            <ul class="text-sm text-zinc-400 space-y-1">
+                                <li>• Operating Systems (9 Days)</li>
+                                <li>• Computer Networks (8 Days)</li>
+                                <li>• DBMS (8 Days)</li>
+                                <li>• TOC basics (5 Days)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Full Stack (Phases 1-2)</h4>
+                            <ul class="text-sm text-zinc-400 space-y-1">
+                                <li>• Internet & Terminal Fundamentals</li>
+                                <li>• HTML5 Semantics & Accessibility</li>
+                                <li>• CSS Flex, Grid, Animations</li>
+                                <li>• Tailwind CSS & Portfolio Project</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 2 -->
+                <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="text-3xl font-bold text-zinc-700">M2</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-zinc-100">The Logic Engine</h3>
+                            <p class="text-[10px] font-mono text-zinc-500">DAYS 31-60</p>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-6 pl-12">
+                        <div>
+                            <h4 class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2">GATE (The Grinders)</h4>
+                            <ul class="text-sm text-zinc-400 space-y-1">
+                                <li class="text-red-400 font-medium">• DSA + Algorithms (10 Days)</li>
+                                <li>• Computer Organisation (8 Days)</li>
+                                <li>• Compiler Design (7 Days)</li>
+                                <li>• Engg. Maths Rebuild (5 Days)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Full Stack (Phases 3-4)</h4>
+                            <ul class="text-sm text-zinc-400 space-y-1">
+                                <li>• Advanced JS (Async, APIs, DOM)</li>
+                                <li>• React Core & Advanced Hooks</li>
+                                <li>• State (Zustand) & Data (TanStack)</li>
+                                <li>• Next.js App Router Intro</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month 3 -->
+                <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl relative overflow-hidden opacity-80">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="text-3xl font-bold text-zinc-700">M3</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-zinc-100">Consolidation & Shipping</h3>
+                            <p class="text-[10px] font-mono text-zinc-500">DAYS 61-90</p>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-6 pl-12">
+                        <div>
+                            <h4 class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">GATE (Peak Prep)</h4>
+                            <ul class="text-sm text-zinc-400 space-y-1">
+                                <li>• C Prog & Discrete Maths</li>
+                                <li>• Error Log Intensive Revisit</li>
+                                <li class="font-bold text-blue-300">• Full Length Mocks (2/Week)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Full Stack (Phases 5-6)</h4>
+                            <ul class="text-sm text-zinc-400 space-y-1">
+                                <li>• Node.js Backend & Postgres/Prisma</li>
+                                <li>• AI Integration (OpenAI API, RAG)</li>
+                                <li class="font-bold text-emerald-300">• Full SaaS Capstone Deployment</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== PROTOCOLS VIEW ==================== -->
+        <section id="view-protocols" class="view-section">
+            <header class="mb-8">
+                <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">Hard Protocols</h2>
+                <p class="text-zinc-400 text-sm mt-1">Rules to prevent schedule collapse.</p>
+            </header>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Behavioral Rules -->
+                <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
+                    <h3 class="text-lg font-bold text-zinc-100 mb-4 border-b border-zinc-800 pb-2">Behavioral Code</h3>
+                    <ul class="space-y-4 text-sm text-zinc-300">
+                        <li class="flex gap-3 items-start"><span class="text-indigo-400 font-mono font-bold">R1.</span> <span><strong>No Plan Rewrites.</strong> Execution over planning. No new YouTube strategies.</span></li>
+                        <li class="flex gap-3 items-start"><span class="text-indigo-400 font-mono font-bold">R2.</span> <span><strong>Paper-First PYQs.</strong> Solve on paper, timed, without looking at solutions mid-set.</span></li>
+                        <li class="flex gap-3 items-start"><span class="text-indigo-400 font-mono font-bold">R3.</span> <span><strong>Accountability Gate.</strong> If PYQ accuracy < 75%, error log is mandatory. No exceptions.</span></li>
+                        <li class="flex gap-3 items-start"><span class="text-indigo-400 font-mono font-bold">R4.</span> <span><strong>Zero Blank Days.</strong> If the terminal is not updated by midnight, the day is a failure.</span></li>
+                    </ul>
+                </div>
+
+                <!-- Crisis Protocols -->
+                <div class="space-y-4">
+                    <div class="bg-amber-900/10 border border-amber-900/30 p-5 rounded-xl">
+                        <h4 class="text-sm font-bold text-amber-500 mb-1 flex items-center gap-2">⚠️ The "Compress" Protocol</h4>
+                        <p class="text-xs text-zinc-400 leading-relaxed"><strong>Trigger:</strong> Video Editing Workload.<br><strong>Action:</strong> Activate system toggle. FSD blocks are dropped entirely. 14:00 - 18:00 reallocated to editing. GATE morning blocks remain untouchable.</p>
+                    </div>
+                    <div class="bg-blue-900/10 border border-blue-900/30 p-5 rounded-xl">
+                        <h4 class="text-sm font-bold text-blue-400 mb-1 flex items-center gap-2">🔋 The "Minimum Viable" Protocol</h4>
+                        <p class="text-xs text-zinc-400 leading-relaxed"><strong>Trigger:</strong> Sickness or extreme fatigue.<br><strong>Action:</strong> Swap GATE "Deep Dive" for passive reading. Swap PYQs for reading the Error Log. Swap FSD Build for tutorial watching.</p>
+                    </div>
+                    <div class="bg-red-900/10 border border-red-900/30 p-5 rounded-xl">
+                        <h4 class="text-sm font-bold text-red-400 mb-1 flex items-center gap-2">🚨 The "Debt Repayment" Protocol</h4>
+                        <p class="text-xs text-zinc-400 leading-relaxed"><strong>Trigger:</strong> A complete zero-day.<br><strong>Action:</strong> Do NOT double up tomorrow. Stay on schedule. Reclaim the missed topic during Sunday's buffer window.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<!-- Custom Toast Container -->
+<div id="toast-container"></div>
+
+<script>
+    // --- STATE MANAGEMENT ---
+    let currentMode = 'DEFAULT'; 
+    const STORAGE_KEY = 'lockInOS_db_v1';
+    let db = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    let progressChartInstance = null;
+
+    // --- SCHEDULE DATA ---
+    const defaultSchedule = [
+        { time: "06:30 - 08:30", task: "GATE: Concept Deep Dive", target: "Topic Mastered", type: "gate" },
+        { time: "09:30 - 11:30", task: "GATE: PYQs & Application", target: "Timed Eval", type: "gate" },
+        { time: "11:30 - 12:30", task: "GATE: Error Logging", target: "Log Updated", type: "gate" },
+        { time: "14:00 - 15:30", task: "FSD: Concept Theory", target: "Docs Read", type: "fsd" },
+        { time: "15:30 - 18:00", task: "FSD: Build & Implementation", target: "Code Written", type: "fsd" },
+        { time: "19:30 - 21:30", task: "GATE: Spaced Revision (Day-7)", target: "Flashcards", type: "gate" },
+        { time: "21:30 - 22:00", task: "OS Audit Terminal Logging", target: "Data Committed", type: "sys" }
+    ];
+
+    const editSchedule = [
+        { time: "06:30 - 08:30", task: "GATE: Concept Deep Dive", target: "Topic Mastered", type: "gate" },
+        { time: "09:30 - 11:30", task: "GATE: PYQs & Application", target: "Timed Eval", type: "gate" },
+        { time: "11:30 - 12:30", task: "GATE: Error Logging", target: "Log Updated", type: "gate" },
+        { time: "14:00 - 18:00", task: "VIDEO EDITING PROTOCOL", target: "Client Work", type: "edit" },
+        { time: "19:30 - 20:30", task: "FSD: Maintenance (Review)", target: "No New Logic", type: "fsd" },
+        { time: "20:30 - 21:30", task: "GATE: Spaced Revision", target: "Flashcards", type: "gate" },
+        { time: "21:30 - 22:00", task: "OS Audit Terminal Logging", target: "Data Committed", type: "sys" }
+    ];
+
+    // --- INITIALIZATION ---
+    window.onload = () => {
+        document.getElementById('input-date').valueAsDate = new Date();
+        document.getElementById('current-date-display').innerText = new Date().toISOString().split('T')[0];
+        if(db.length > 0) {
+            document.getElementById('input-day').value = parseInt(db[db.length-1].day) + 1;
+        } else {
+            document.getElementById('input-day').value = 1;
+        }
+        
+        renderSchedule();
+        initChart();
+        updateDatabaseView();
+        updateDashboardKPIs();
+    };
+
+    // --- UI NAVIGATION ---
+    function switchView(viewId) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(`view-${viewId}`).classList.add('active');
+        document.getElementById(`nav-${viewId}`).classList.add('active');
+    }
+
+    function toggleMode() {
+        const btn = document.getElementById('mode-toggle');
+        const icon = document.getElementById('mode-icon');
+        const text = document.getElementById('mode-text');
+        const badge = document.getElementById('dash-mode-badge');
+        
+        if (currentMode === 'DEFAULT') {
+            currentMode = 'EDIT';
+            text.innerText = 'VIDEO PROTOCOL ON';
+            btn.classList.replace('border-indigo-500/30', 'border-amber-500/50');
+            btn.classList.replace('text-indigo-400', 'text-amber-400');
+            btn.classList.replace('hover:bg-indigo-500/10', 'hover:bg-amber-500/10');
+            icon.classList.add('animate-pulse');
+            
+            badge.innerText = 'COMPRESSED (EDIT) RUNTIME';
+            badge.className = 'px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-mono font-bold rounded animate-pulse';
+        } else {
+            currentMode = 'DEFAULT';
+            text.innerText = 'DEFAULT RUNTIME';
+            btn.classList.replace('border-amber-500/50', 'border-indigo-500/30');
+            btn.classList.replace('text-amber-400', 'text-indigo-400');
+            btn.classList.replace('hover:bg-amber-500/10', 'hover:bg-indigo-500/10');
+            icon.classList.remove('animate-pulse');
+
+            badge.innerText = 'DEFAULT RUNTIME';
+            badge.className = 'px-2.5 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-mono font-bold rounded';
+        }
+        renderSchedule();
+    }
+
+    function renderSchedule() {
+        const schedule = currentMode === 'DEFAULT' ? defaultSchedule : editSchedule;
+        const tbody = document.getElementById('schedule-body');
+        tbody.innerHTML = '';
+
+        schedule.forEach(item => {
+            let color = 'text-zinc-300';
+            let targetColor = 'text-zinc-500';
+            
+            if(item.type === 'gate') { color = 'text-indigo-300 font-medium'; targetColor = 'text-indigo-500/70'; }
+            if(item.type === 'fsd') { color = 'text-emerald-300 font-medium'; targetColor = 'text-emerald-500/70'; }
+            if(item.type === 'edit') { color = 'text-amber-400 font-bold'; targetColor = 'text-amber-600'; }
+
+            tbody.innerHTML += `
+                <tr class="border-b border-zinc-800/50 last:border-0 hover:bg-zinc-800/20 transition-colors">
+                    <td class="py-3 font-mono text-[11px] text-zinc-500">${item.time}</td>
+                    <td class="py-3 text-sm ${color}">${item.task}</td>
+                    <td class="py-3 text-right text-xs font-mono ${targetColor}">${item.target}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // --- NOTIFICATION SYSTEM (No Alerts) ---
+    function showToast(message, type = 'error') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const icon = type === 'error' ? '⚠️' : '✅';
+        toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.3s ease-out forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    // --- DATA LOGIC ---
+    function submitAudit() {
+        const day = parseInt(document.getElementById('input-day').value);
+        const date = document.getElementById('input-date').value;
+        const isVideo = document.getElementById('input-video').checked;
+        
+        const gateTopic = document.getElementById('input-gate-topic').value.trim();
+        const pyqAtt = parseInt(document.getElementById('input-pyq-att').value) || 0;
+        const pyqCor = parseInt(document.getElementById('input-pyq-cor').value) || 0;
+        const errorLog = document.getElementById('input-error-log').value.trim();
+        
+        const fsdTopic = document.getElementById('input-fsd-topic').value.trim();
+        const fsdHrs = parseFloat(document.getElementById('input-fsd-hrs').value) || 0;
+        const gitCommit = document.getElementById('input-git').value;
+
+        // Validation
+        if (!day || isNaN(day) || !date || !gateTopic) {
+            showToast("Day, Date, and GATE Topic are mandatory fields.");
+            return;
+        }
+
+        let acc = 0;
+        if (pyqAtt > 0) acc = ((pyqCor / pyqAtt) * 100).toFixed(1);
+
+        if (acc < 75 && errorLog === "") {
+            showToast("PYQ Accuracy below 75%. Error Log Insights are REQUIRED (Rule R3).");
+            return;
+        }
+
+        const record = { day, date, isVideo, gateTopic, pyqAtt, pyqCor, acc, errorLog, fsdTopic, fsdHrs, gitCommit };
+
+        // Save (Overwrite if day exists, else append)
+        const idx = db.findIndex(r => r.day === day);
+        if (idx > -1) db[idx] = record;
+        else db.push(record);
+
+        db.sort((a, b) => a.day - b.day);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+
+        showToast(`Audit for Day ${day} committed successfully.`, 'success');
+
+        // Cleanup form
+        document.getElementById('input-gate-topic').value = '';
+        document.getElementById('input-pyq-att').value = '';
+        document.getElementById('input-pyq-cor').value = '';
+        document.getElementById('input-error-log').value = '';
+        document.getElementById('input-fsd-topic').value = '';
+        document.getElementById('input-fsd-hrs').value = '';
+        document.getElementById('input-video').checked = false;
+        document.getElementById('input-day').value = day + 1;
+
+        updateDatabaseView();
+        updateDashboardKPIs();
+    }
+
+    function updateDatabaseView() {
+        const tbody = document.getElementById('db-body');
+        const emptyState = document.getElementById('db-empty');
+        tbody.innerHTML = '';
+
+        if(db.length === 0) {
+            emptyState.classList.remove('hidden');
+            emptyState.classList.add('flex');
+            return;
+        }
+        
+        emptyState.classList.add('hidden');
+        emptyState.classList.remove('flex');
+
+        db.slice().reverse().forEach(r => {
+            const accClass = r.acc >= 75 ? 'text-emerald-400' : 'text-red-400';
+            const vidBadge = r.isVideo ? `<span class="bg-amber-500/20 text-amber-500 border border-amber-500/30 text-[9px] px-1.5 py-0.5 rounded ml-2">EDIT</span>` : '';
+            const gitBadge = r.gitCommit === 'Yes' ? `<span class="text-emerald-500 text-xs">✓ Git</span>` : '';
+
+            tbody.innerHTML += `
+                <tr class="hover:bg-zinc-800/30 transition-colors">
+                    <td class="p-4 font-mono text-zinc-300">D${r.day}<br><span class="text-[10px] text-zinc-600">${r.date}</span></td>
+                    <td class="p-4">
+                        <div class="text-sm text-indigo-300 font-medium">${r.gateTopic} ${vidBadge}</div>
+                        <div class="text-xs text-zinc-500">${r.errorLog ? `Log: ${r.errorLog.substring(0,30)}...` : 'No errors logged'}</div>
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="font-mono font-bold ${accClass}">${r.acc}%</div>
+                        <div class="text-[10px] text-zinc-600">${r.pyqCor}/${r.pyqAtt}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="text-sm text-emerald-300">${r.fsdTopic || '-'}</div>
+                        <div class="text-xs text-zinc-500">${r.fsdHrs} hrs ${gitBadge}</div>
+                    </td>
+                    <td class="p-4 text-right">
+                        <button onclick="deleteRecord(${r.day})" class="text-zinc-600 hover:text-red-400 transition-colors text-xs">✕</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function deleteRecord(dayNum) {
+        // Since no confirm/alert is allowed, we'll do a soft delete pattern or just immediate delete with toast
+        db = db.filter(r => r.day !== dayNum);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+        updateDatabaseView();
+        updateDashboardKPIs();
+        showToast(`Record for Day ${dayNum} deleted.`);
+    }
+
+    function wipeDatabase() {
+        // Immediate wipe with toast (replacing confirm alert)
+        db = [];
+        localStorage.removeItem(STORAGE_KEY);
+        document.getElementById('input-day').value = 1;
+        updateDatabaseView();
+        updateDashboardKPIs();
+        showToast("Database completely wiped.");
+    }
+
+    function updateDashboardKPIs() {
+        let totalAtt = 0, totalCor = 0, totalFsd = 0, editDays = 0;
+
+        db.forEach(r => {
+            totalAtt += r.pyqAtt;
+            totalCor += r.pyqCor;
+            totalFsd += parseFloat(r.fsdHrs) || 0;
+            if(r.isVideo) editDays++;
+        });
+
+        const overallAcc = totalAtt > 0 ? ((totalCor / totalAtt) * 100).toFixed(1) : 0;
+        
+        document.getElementById('dash-days').innerText = `${db.length} / 90`;
+        
+        const accEl = document.getElementById('dash-acc');
+        accEl.innerText = `${overallAcc}%`;
+        accEl.className = overallAcc >= 75 ? 'text-2xl font-bold text-emerald-400' : (overallAcc > 0 ? 'text-2xl font-bold text-red-400' : 'text-2xl font-bold text-zinc-600');
+        
+        document.getElementById('dash-fsd').innerText = totalFsd.toFixed(1);
+        document.getElementById('dash-edit').innerText = editDays;
+
+        updateChart(db.length);
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        progressChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Logged', 'Remaining'],
+                datasets: [{
+                    data: [0, 90],
+                    backgroundColor: ['#818cf8', '#18181b'],
+                    borderColor: '#27272a',
+                    borderWidth: 2,
+                    cutout: '80%'
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                animation: { duration: 1000, easing: 'easeOutQuart' }
+            }
+        });
+    }
+
+    function updateChart(daysLogged) {
+        if(!progressChartInstance) return;
+        const remaining = Math.max(0, 90 - daysLogged);
+        progressChartInstance.data.datasets[0].data = [daysLogged, remaining];
+        
+        // Color logic based on progress
+        let progressColor = '#818cf8'; // default indigo
+        if (daysLogged > 30) progressColor = '#a78bfa'; // violet for phase 2
+        if (daysLogged > 60) progressColor = '#34d399'; // emerald for phase 3
+        
+        progressChartInstance.data.datasets[0].backgroundColor[0] = progressColor;
+        progressChartInstance.update();
+        
+        document.getElementById('chart-days-left').innerText = remaining;
+    }
+</script>
+</body>
+</html>

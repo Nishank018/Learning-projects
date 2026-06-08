@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>90-Day Accountability Terminal</title>
+  <style>
+    :root {
+      --bg: #0f0f11;
+      --panel: #1a1a1e;
+      --border: #333;
+      --text: #e0e0e0;
+      --muted: #888;
+      --gate-primary: #7F77DD;
+      --fsd-primary: #00ffc8;
+      --alert: #ff4a4a;
+      --warning: #ffb84d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+    body { background-color: var(--bg); color: var(--text); padding: 20px; line-height: 1.6; }
+    .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
+    
+    @media (max-width: 800px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    h1, h2, h3 { text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+    h1 { font-size: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+    
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 20px; margin-bottom: 20px; }
+    
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; margin-top: 15px; }
+    input[type="text"], input[type="number"], input[type="date"] { 
+      width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 4px;
+    }
+    input:focus { outline: 1px solid var(--gate-primary); }
+    
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+    
+    .checkbox-group { display: flex; align-items: center; gap: 10px; margin-top: 20px; padding: 10px; background: rgba(255, 184, 77, 0.1); border-left: 3px solid var(--warning); }
+    .checkbox-group input { width: 18px; height: 18px; cursor: pointer; }
+    
+    button { 
+      width: 100%; background: var(--text); color: var(--bg); border: none; padding: 12px; margin-top: 20px; 
+      font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; transition: 0.2s;
+    }
+    button:hover { background: var(--gate-primary); color: white; }
+
+    /* Dashboard Stats */
+    .stat-box { background: var(--bg); border: 1px solid var(--border); padding: 15px; text-align: center; border-radius: 4px; margin-bottom: 10px; }
+    .stat-value { font-size: 24px; font-weight: bold; margin: 5px 0; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+    .good { color: #00ffc8; }
+    .bad { color: var(--alert); }
+
+    /* History Table */
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: normal; text-transform: uppercase; }
+    .vid-tag { background: var(--warning); color: #000; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;}
+    .acc-high { color: var(--fsd-primary); }
+    .acc-low { color: var(--alert); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div>
+      <h1>Daily Audit Entry</h1>
+      <div class="panel">
+        <div class="grid-2">
+          <div>
+            <label>Day Number (1-90)</label>
+            <input type="number" id="dayNum" min="1" max="90" required>
+          </div>
+          <div>
+            <label>Date</label>
+            <input type="date" id="dateStr" required>
+          </div>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="videoDay">
+          <div>
+            <strong>Video Editing Protocol Activated</strong>
+            <div style="font-size:11px; color:var(--muted)">Adjusts day expectations. FSD blocks dropped. GATE deep work preserved.</div>
+          </div>
+        </div>
+
+        <h2 style="margin-top: 30px; color: var(--gate-primary); font-size: 16px;">GATE Execution (Primary)</h2>
+        <label>Subject & Topic Revised</label>
+        <input type="text" id="gateTopic" placeholder="e.g., OS: Process Scheduling" required>
+        
+        <div class="grid-3">
+          <div>
+            <label>PYQs Attempted</label>
+            <input type="number" id="pyqAttempt" min="0" required>
+          </div>
+          <div>
+            <label>PYQs Correct</label>
+            <input type="number" id="pyqCorrect" min="0" required>
+          </div>
+          <div>
+            <label>Workbook Score</label>
+            <input type="text" id="wbScore" placeholder="e.g., 14/20">
+          </div>
+        </div>
+
+        <label>Error Log (Must complete if PYQ < 75%)</label>
+        <input type="text" id="errorLog" placeholder="Silly math error in SJF, Concept gap in LRU. Logged in notebook.">
+
+        <h2 style="margin-top: 30px; color: var(--fsd-primary); font-size: 16px;">Full Stack Execution (Secondary)</h2>
+        <label>Dev Topic / Project</label>
+        <input type="text" id="fsdTopic" placeholder="e.g., Express Middleware / Auth Setup">
+        
+        <div class="grid-2">
+          <div>
+            <label>Deep Work Blocks (1 block = 2hrs)</label>
+            <input type="number" step="0.5" id="fsdBlocks" min="0">
+          </div>
+          <div>
+            <label>Code Committed?</label>
+            <input type="text" id="gitCommit" placeholder="Yes/No">
+          </div>
+        </div>
+
+        <button onclick="saveEntry()">Submit Daily Record</button>
+      </div>
+
+      <h1>Execution History</h1>
+      <div class="panel" style="overflow-x: auto;">
+        <table id="historyTable">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Mode</th>
+              <th>GATE Topic</th>
+              <th>Accuracy</th>
+              <th>FSD Topic</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <h1>90-Day Analytics</h1>
+      <div class="panel">
+        <div class="stat-box">
+          <div class="stat-label">Days Logged</div>
+          <div class="stat-value" id="statDays">0 / 90</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg PYQ Accuracy</div>
+          <div class="stat-value" id="statAcc">0%</div>
+          <div style="font-size: 10px; color: var(--muted); margin-top: 5px;">Target: >75% (Rule R3)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Total PYQs Solved</div>
+          <div class="stat-value" id="statPyq">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">FSD Deep Work Blocks</div>
+          <div class="stat-value" id="statDev">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Video Editing Days Managed</div>
+          <div class="stat-value" id="statVideo">0</div>
+        </div>
+        
+        <div style="margin-top: 20px; font-size: 11px; color: var(--muted); padding-top: 15px; border-top: 1px solid var(--border);">
+          <strong>SYSTEM RULES:</strong><br>
+          1. If Video Protocol is active, 0 FSD blocks is acceptable.<br>
+          2. If GATE PYQ Accuracy falls below 75%, error log is mandatory.<br>
+          3. No record = Day did not happen.
+        </div>
+        
+        <button style="background: var(--alert); margin-top: 30px;" onclick="clearData()">Wipe Database</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize date to today
+    document.getElementById('dateStr').valueAsDate = new Date();
+
+    let records = JSON.parse(localStorage.getItem('lockInOS_data')) || [];
+
+    function saveEntry() {
+      const pyqA = parseInt(document.getElementById('pyqAttempt').value) || 0;
+      const pyqC = parseInt(document.getElementById('pyqCorrect').value) || 0;
+      const acc = pyqA > 0 ? ((pyqC / pyqA) * 100).toFixed(1) : 0;
+
+      if (acc < 75 && document.getElementById('errorLog').value.trim() === '') {
+        alert('PYQ Accuracy is below 75%. You MUST fill out the Error Log per Rule R3.');
+        return;
+      }
+
+      const entry = {
+        day: document.getElementById('dayNum').value,
+        date: document.getElementById('dateStr').value,
+        videoDay: document.getElementById('videoDay').checked,
+        gateTopic: document.getElementById('gateTopic').value,
+        pyqAttempt: pyqA,
+        pyqCorrect: pyqC,
+        acc: acc,
+        wbScore: document.getElementById('wbScore').value,
+        errorLog: document.getElementById('errorLog').value,
+        fsdTopic: document.getElementById('fsdTopic').value,
+        fsdBlocks: parseFloat(document.getElementById('fsdBlocks').value) || 0,
+        gitCommit: document.getElementById('gitCommit').value
+      };
+
+      if(!entry.day || !entry.gateTopic) {
+        alert("Day number and GATE topic are non-negotiable.");
+        return;
+      }
+
+      // Check if day already exists, overwrite if so
+      const existingIdx = records.findIndex(r => r.day === entry.day);
+      if (existingIdx > -1) {
+        records[existingIdx] = entry;
+      } else {
+        records.push(entry);
+      }
+
+      // Sort by day
+      records.sort((a, b) => a.day - b.day);
+      localStorage.setItem('lockInOS_data', JSON.stringify(records));
+      
+      updateUI();
+      
+      // Clear specific fields for next entry
+      document.getElementById('gateTopic').value = '';
+      document.getElementById('pyqAttempt').value = '';
+      document.getElementById('pyqCorrect').value = '';
+      document.getElementById('errorLog').value = '';
+      document.getElementById('fsdTopic').value = '';
+      document.getElementById('fsdBlocks').value = '';
+      document.getElementById('videoDay').checked = false;
+      document.getElementById('dayNum').value = parseInt(entry.day) + 1;
+    }
+
+    function updateUI() {
+      const tbody = document.getElementById('historyBody');
+      tbody.innerHTML = '';
+      
+      let totalA = 0, totalC = 0, totalDev = 0, vidDays = 0;
+
+      records.forEach(r => {
+        totalA += r.pyqAttempt;
+        totalC += r.pyqCorrect;
+        totalDev += r.fsdBlocks;
+        if(r.videoDay) vidDays++;
+
+        const accClass = r.acc >= 75 ? 'acc-high' : 'acc-low';
+        const mode = r.videoDay ? '<span class="vid-tag">EDIT DAY</span>' : 'Standard';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>D${r.day}</td>
+          <td>${mode}</td>
+          <td>${r.gateTopic}</td>
+          <td class="${accClass}"><strong>${r.acc}%</strong> (${r.pyqC}/${r.pyqA})</td>
+          <td>${r.fsdTopic || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Update Analytics
+      const avgAcc = totalA > 0 ? ((totalC / totalA) * 100).toFixed(1) : 0;
+      document.getElementById('statDays').innerText = `${records.length} / 90`;
+      
+      const accEl = document.getElementById('statAcc');
+      accEl.innerText = `${avgAcc}%`;
+      accEl.className = avgAcc >= 75 ? 'stat-value good' : 'stat-value bad';
+      
+      document.getElementById('statPyq').innerText = totalA;
+      document.getElementById('statDev').innerText = totalDev;
+      document.getElementById('statVideo').innerText = vidDays;
+    }
+
+    function clearData() {
+      if(confirm("Are you sure? This deletes your entire 90-day history.")) {
+        localStorage.removeItem('lockInOS_data');
+        records = [];
+        updateUI();
+      }
+    }
+
+    // Initial load
+    if (records.length > 0) {
+      document.getElementById('dayNum').value = parseInt(records[records.length-1].day) + 1;
+    }
+    updateUI();
+  </script>
+</body>
+</html>
