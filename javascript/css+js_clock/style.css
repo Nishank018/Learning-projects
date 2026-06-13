@@ -1,0 +1,50 @@
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+html, body{
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+}
+
+.clock{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 200px;
+    height: 200px;
+    border: 5px solid black;
+    border-radius: 50%;
+    position: relative;
+}
+.hand{
+    position: absolute;
+    background-color: black;
+    border-radius: 2px;
+    transform-origin: 100% 100%;
+}
+.hour-hand{
+    width: 6px;
+    height: 50px;
+    top: 50px;
+    left: 97px;
+}
+.min-hand{
+    width: 4px;
+    height: 70px;
+    top: 30px;
+    left: 98px;
+}     
+.second-hand{
+    width: 2px;
+    height: 90px;
+    top: 10px;
+    left: 99px;
+    background-color: red;
+}      
