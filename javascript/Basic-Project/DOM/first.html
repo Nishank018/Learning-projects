@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM</title>
+</head>
+<body style="background-color: rgb(23, 22, 22); color: #e7dddd;">
+    <ul class="lang">
+        <li>javacript</li>
+    </ul>
+    
+</body>
+
+<script>
+
+    //not optimized
+    function addLanguage(langName){
+        const li = document.createElement('li');
+        li.innerHTML = `${langName}`
+        document.querySelector('.lang').append(li)
+        
+
+    }
+
+    addLanguage("hero")
+    addLanguage("python")
+//optimized
+    function addOpti(langName){
+        const  li = document.createElement('li');
+        li.appendChild(document.createTextNode(langName))
+        document.querySelector('.lang').append(li)
+
+
+    }
+    addOpti("cpp") 
+    addOpti("laltnotp")
+
+    //edit values 
+    //not optimized 
+    const secondLang = document.querySelector('li:nth-child(2)');
+    secondLang.innerHTML = "go";
+
+    const thiredLang = document.querySelector('li:nth-child(5)')
+    thiredLang.innerHTML = "Rust"
+
+    //obtimized 
+
+    const newLi = document.createElement('li')
+    newLi.textContent = "zozo"
+    secondLang.replaceWith(newLi)
+
+    const firstLang = document.querySelector('li:first-child')
+    firstLang.outerHTML = "<li> TypeScript</li>"
+
+    //remove
+    const removeChild = document.querySelector('li:nth-child(2)')
+    removeChild.remove()
+
+    
+
+   
+</script>
+
+
+</html>
