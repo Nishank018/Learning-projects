@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: rgb(17, 16, 16);
+            color: whitesmoke;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Chai With Nishank</h1>
+    <button>Daba do bhai </button>
+
+
+
+
+    <script>
+
+        const changeName = function () {
+            console.log('yoyo')
+        }
+        setTimeout(changeName, 2000)
+
+        const changeText = function () {
+            document.querySelector('h1').
+                innerHTML = 'jyda chai maat piyo huyz '
+        }
+        const changeMe = setTimeout(changeText, 2000)
+
+        document.querySelector('button')
+        addEventListener('click', function (){
+            clearTimeout(changeMe)
+            console.log("band ho gya ryyyy ")
+
+        })
+
+
+    </script>
+
+
+</body>
+
+</html>
