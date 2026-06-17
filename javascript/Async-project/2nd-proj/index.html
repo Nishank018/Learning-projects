@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>ary bhai kya hal🥲</h1>
+    <button id="start"> suru hoja </button>
+    <button id="stop">ary ruk ja bhai </button>
+
+
+    <script>
+
+       let starting;
+        document.getElementById('start').addEventListener('click', function(){
+            starting = setInterval(suruHoja, 1000)
+        })
+
+        const suruHoja = function (){
+           console.log('yoyo', Date.now())
+         }
+
+       
+        
+
+
+        document.querySelector('#stop').addEventListener('click', function(){
+           clearInterval(starting)
+            console.log("helloooo")
+        })
+
+    </script>
+</body>
+</html>
