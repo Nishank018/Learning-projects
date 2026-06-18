@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<button id="btn">Get Playlist</button>
+
+<script>
+document.getElementById('btn').addEventListener('click', async () => {
+
+const apiKey = 'AIzaSyBQgffYxdlEzlYxT8YYKI3zYOxiqtqHY38';
+const playlistId = 'PLu71SKxNbfoDBNF5s-WH6aLbthSEIMhMI';
+
+const response = await fetch(
+`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=5&playlistId=${playlistId}&key=${apiKey}`
+);
+
+const data = await response.json();
+
+console.log(data);
+
+});
+</script>
+
+</body>
+</html>
