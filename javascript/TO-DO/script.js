@@ -3,9 +3,10 @@ const input = document.querySelector("input")
 const button = document.querySelector("button")
 const task = document.querySelector("ul")
 
-button.addEventListener('click', function(){ // add event listener to create the task 
+const addTask = () =>
+{ // add event listener to create the task 
     const inputText = input.value.trim()//  take the input value and store it in a  variabel --- used input.vlaue.trim (), becose input also accepting the space (trim reomve teh st and ending space )
-    if(inputText.trim() ===  ""){ // used trim() for remvoing the space problem ,and used condtion statement to resolve the empty task entry 
+    if(inputText === ""){ // used trim() for remvoing the space problem ,and used condtion statement to resolve the empty task entry 
         return;
     }
         
@@ -21,7 +22,7 @@ button.addEventListener('click', function(){ // add event listener to create the
         li.appendChild(checkbox)
         li.appendChild(span)
 
-        checkbox.addEventListener('change', function(){
+        checkbox.addEventListener('change', ()=>{
             if(checkbox.checked){
                 span.classList.add('completed')
             }
@@ -35,13 +36,19 @@ button.addEventListener('click', function(){ // add event listener to create the
     
         task.appendChild(li) // appned that create li element in the html ul created 
         input.value = '' // insure that after appeiding the value form input the input feiled became empty again 
+  
+}
 
-       
+
+button.addEventListener('click', addTask)
+
+input.addEventListener('keydown', (event) =>{
     
-   
+    if(event.key === 'Enter'){
+        addTask()
+     }
+
 })
-
-
 
 
 
